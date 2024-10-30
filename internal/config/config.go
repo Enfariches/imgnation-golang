@@ -9,8 +9,8 @@ import (
 )
 
 type Config struct {
-	Env            string `yaml:"env" env-default:"local"`
-	Storage_engine string `yaml:"storage_engine" env-required:"true"`
+	Env        string `yaml:"env" env-default:"local"`
+	StorageURL string `yaml:"storage_url"`
 	Server
 }
 
@@ -38,7 +38,7 @@ func NewConfig(nameConfig string) *Config {
 
 	err = cleanenv.ReadConfig(pathConfig, &cfg)
 	if err != nil {
-		log.Fatal("Failed to read config: %s", err)
+		log.Fatal("Failed to read config: %w", err)
 	}
 
 	return &cfg

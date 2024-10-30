@@ -1,0 +1,5 @@
+# Описание конфига
+env: "local"
+storage_url: "postgres://postgres:root@localhost/imgnationdb?sslmode=disable"
+http_server:
+  address: localhost:8080
