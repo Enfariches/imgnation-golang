@@ -7,7 +7,11 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func New(StorageURL string) (*sql.DB, error) {
+type Storage struct {
+	db *sql.DB
+}
+
+func New(StorageURL string) (*Storage, error) {
 	const op = "storage.postgres.new"
 
 	db, err := sql.Open("postgres", StorageURL)
@@ -23,6 +27,10 @@ func New(StorageURL string) (*sql.DB, error) {
 		return nil, fmt.Errorf("%s, %w", op, err)
 	}
 
-	return db, nil
+	return &Storage{db: db}, nil
 
+}
+
+func (s *Storage) SavePath(path string) {
+	const op = "storage.postgres.SaveImg"
 }
