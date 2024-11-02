@@ -32,7 +32,7 @@ func SavePath(log *slog.Logger, saver Saver) http.HandlerFunc {
 		}
 		defer file.Close()
 		infoFile := header.Header.Get("Content-Type")
-		log.Debug(infoFile)
+
 		if ok := strings.HasPrefix(infoFile, "image/"); !ok {
 			log.Error("Invalid body") //Response invalid body
 			return
@@ -60,8 +60,14 @@ func SavePath(log *slog.Logger, saver Saver) http.HandlerFunc {
 		err = os.Rename(filePath, newFilePath)
 		if err != nil {
 			log.Error("Failed rename")
+			return
 		}
 
+		err = saver.SavePath(uuidStr)
+		if err != nil {
+			log.Error("Failed to Save to DB path", sl.Error(err))
+			return
+		}
 		log.Info("File upload!")
 	}
 

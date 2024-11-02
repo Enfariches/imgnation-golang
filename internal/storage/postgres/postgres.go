@@ -20,10 +20,8 @@ func New(StorageURL string) (*Storage, error) {
 		return nil, fmt.Errorf("%s, %w", op, err)
 	}
 
-	defer db.Close()
-
-	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS images(id INTEGER PRIMARY KEY, 
-   					path TEXT);`)
+	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS images(id SERIAL PRIMARY KEY, 
+   					path TEXT NOT NULL UNIQUE);`)
 	if err != nil {
 		return nil, fmt.Errorf("%s, %w", op, err)
 	}
@@ -35,9 +33,9 @@ func New(StorageURL string) (*Storage, error) {
 func (s *Storage) SavePath(path string) error {
 	const op = "storage.postgres.SavePath"
 
-	stmt, err := s.db.Prepare(`INSERT INTO images(path) VALUES (?)`)
+	stmt, err := s.db.Prepare(`INSERT INTO images(path) VALUES ($1);`)
 	if err != nil {
-		return fmt.Errorf("%s, %w", op, err)
+		return fmt.Errorf("%s error prepare, %w", op, err)
 	}
 	_, err = stmt.Exec(path)
 	if err != nil {
