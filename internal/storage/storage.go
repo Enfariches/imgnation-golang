@@ -3,5 +3,5 @@ package storage
 import "errors"
 
 var (
-	ErrNotFound = errors.New("image not found")
+	ErrPathExists = errors.New("path is has exists")
 )

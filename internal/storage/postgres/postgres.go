@@ -3,8 +3,9 @@ package postgres
 import (
 	"database/sql"
 	"fmt"
+	"img/internal/storage"
 
-	_ "github.com/lib/pq"
+	pq "github.com/lib/pq"
 )
 
 type Storage struct {
@@ -31,6 +32,20 @@ func New(StorageURL string) (*Storage, error) {
 
 }
 
-func (s *Storage) SavePath(path string) {
-	const op = "storage.postgres.SaveImg"
+func (s *Storage) SavePath(path string) error {
+	const op = "storage.postgres.SavePath"
+
+	stmt, err := s.db.Prepare(`INSERT INTO images(path) VALUES (?)`)
+	if err != nil {
+		return fmt.Errorf("%s, %w", op, err)
+	}
+	_, err = stmt.Exec(path)
+	if err != nil {
+		if errSql, ok := err.(*pq.Error); ok && errSql.Code == "23505" {
+			return fmt.Errorf("%s, %w", op, storage.ErrPathExists)
+		}
+		return fmt.Errorf("%s, %w", op, err)
+	}
+
+	return nil
 }

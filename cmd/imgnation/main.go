@@ -25,6 +25,7 @@ func main() {
 	_ = storage
 
 	r := chi.NewRouter()
+	r.Use(middleware.RequestID)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(mwLogger.New(log))
