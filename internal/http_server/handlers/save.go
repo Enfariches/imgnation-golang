@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	resp "img/internal/lib/api/response"
 	"img/internal/lib/logger/sl"
 	"io"
 	"log/slog"
@@ -10,9 +11,17 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/render"
 	"github.com/gofrs/uuid"
 )
 
+// Наследования и модификация структуры Response
+type Response struct {
+	resp.Response
+	Uuid string `json:"uuid,omitempty"` //Теги (метаданные) определяют представления в JSON
+}
+
+//go:generate mockery --name=Saver
 type Saver interface {
 	SavePath(path string) error
 }
@@ -34,7 +43,7 @@ func SavePath(log *slog.Logger, saver Saver) http.HandlerFunc {
 		infoFile := header.Header.Get("Content-Type")
 
 		if ok := strings.HasPrefix(infoFile, "image/"); !ok {
-			log.Error("Invalid body") //Response invalid body
+			render.JSON(w, r, resp.Error("Invalid body")) //Response invalid body
 			return
 		}
 		res, _ := strings.CutPrefix(infoFile, "image/")
@@ -42,10 +51,9 @@ func SavePath(log *slog.Logger, saver Saver) http.HandlerFunc {
 		uuid, _ := uuid.NewV7()
 		uuidStr := uuid.String()
 
-		filePath := fmt.Sprintf("upload/%s", header.Filename)
 		newFilePath := fmt.Sprintf("upload/%s.%s", uuidStr, res)
 
-		dst, err := os.Create(filePath)
+		dst, err := os.Create(newFilePath)
 		if err != nil {
 			log.Error("Failed to create temp file in Dir", sl.Error(err))
 			return
@@ -57,18 +65,13 @@ func SavePath(log *slog.Logger, saver Saver) http.HandlerFunc {
 			return
 		}
 
-		err = os.Rename(filePath, newFilePath)
-		if err != nil {
-			log.Error("Failed rename")
-			return
-		}
-
 		err = saver.SavePath(uuidStr)
 		if err != nil {
 			log.Error("Failed to Save to DB path", sl.Error(err))
 			return
 		}
-		log.Info("File upload!")
-	}
 
+		log.Info("File upload!")
+		render.JSON(w, r, Response{*resp.OK(), uuidStr})
+	}
 }
