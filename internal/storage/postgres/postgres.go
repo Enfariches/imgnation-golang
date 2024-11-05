@@ -30,8 +30,8 @@ func New(StorageURL string) (*Storage, error) {
 
 }
 
-func (s *Storage) SavePath(path string) error {
-	const op = "storage.postgres.SavePath"
+func (s *Storage) SaveIMG(path string) error {
+	const op = "storage.postgres.SaveIMG"
 
 	stmt, err := s.db.Prepare(`INSERT INTO images(path) VALUES ($1);`)
 	if err != nil {

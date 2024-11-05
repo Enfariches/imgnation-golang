@@ -2,7 +2,8 @@ package main
 
 import (
 	"img/internal/config"
-	"img/internal/http_server/handlers"
+	"img/internal/http_server/handlers/get"
+	"img/internal/http_server/handlers/save"
 	mwLogger "img/internal/http_server/middleware"
 	"img/internal/lib/logger/sl"
 	"img/internal/logger"
@@ -22,7 +23,6 @@ func main() {
 	if err != nil {
 		log.Error("Failed to init Storage", sl.Error(err))
 	}
-	_ = storage
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
@@ -30,7 +30,9 @@ func main() {
 	r.Use(middleware.Recoverer)
 	r.Use(mwLogger.New(log))
 
-	r.Post("/api/save", handlers.SavePath(log, storage))
+	r.Post("/api/save", save.SaveImage(log, storage))
+	r.Get("/api/img/{uuid}", get.GetImage(log))
+	// IMG -> GET UUID -> SAVE TO UPLOAD && SAVE IN BASE -> CREATE URL && CREATE QR-CODE)
 
 	log.Info("Starting server")
 
