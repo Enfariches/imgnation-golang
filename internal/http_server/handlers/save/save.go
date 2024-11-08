@@ -4,6 +4,7 @@ import (
 	"fmt"
 	resp "img/internal/lib/api/response"
 	"img/internal/lib/logger/sl"
+	"img/internal/lib/qr"
 	"io"
 	"log/slog"
 	"net/http"
@@ -13,7 +14,6 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
 	"github.com/gofrs/uuid"
-	"github.com/skip2/go-qrcode"
 )
 
 // Наследования и модификация структуры Response
@@ -27,7 +27,7 @@ type Saver interface {
 	SaveIMG(path string) error
 }
 
-func SaveImage(log *slog.Logger, saver Saver) http.HandlerFunc {
+func SaveImage(address string, log *slog.Logger, saver Saver) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "http_server.handlers.save"
 
@@ -67,24 +67,19 @@ func SaveImage(log *slog.Logger, saver Saver) http.HandlerFunc {
 			return
 		}
 
-		err = saver.SaveIMG(uuidStr)
-		if err != nil {
-			log.Error("Failed to Save to DB path", sl.Error(err))
-			return
-		}
+		//err = saver.SaveIMG(uuidStr)
+		// if err != nil {
+		// 	log.Error("Failed to Save to DB path", sl.Error(err))
+		// 	return
+		// }
 
 		log.Info("File upload!")
-		QRGenerate(log, uuidStr, extension)
-		//render.Data(w, r, png) //Отправка QR-code в виде application/octet-stream
-		render.JSON(w, r, Response{*resp.OK(), uuidStr})
-	}
-}
-
-func QRGenerate(log *slog.Logger, uuid, extension string) {
-
-	url := fmt.Sprintf("http://localhost:8080/api/img/%s?extension=%s", uuid, extension) //cfg.http_server.Address <- Вывод из КФГ
-	err := qrcode.WriteFile(url, qrcode.Medium, 512, "qr2.png")
-	if err != nil {
-		log.Error("Failed to create qr", sl.Error(err))
+		octet, err := qr.QRGenerate(address, log, uuidStr, extension)
+		if err != nil {
+			log.Error("Failed to generate QR-code", sl.Error(err))
+			return
+		}
+		render.Data(w, r, octet)
+		//render.JSON(w, r, Response{*resp.OK(), uuidStr})
 	}
 }

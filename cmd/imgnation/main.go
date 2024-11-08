@@ -30,9 +30,18 @@ func main() {
 	r.Use(middleware.Recoverer)
 	r.Use(mwLogger.New(log))
 
-	r.Post("/api/save", save.SaveImage(log, storage))
+	r.Post("/api/save", save.SaveImage(cfg.Server.Address, log, storage))
 	r.Get("/api/img/{uuid}", get.GetImage(log))
 	// IMG -> GET UUID -> SAVE TO UPLOAD && SAVE IN BASE -> CREATE URL && CREATE QR-CODE)
+	// SWITCH UPLOAD TO S3 STORAGE (AWS SDK)
+
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "web/static/index.html")
+	})
+
+	r.Get("/web/static/*", func(w http.ResponseWriter, r *http.Request) {
+		http.StripPrefix("/web/static/", http.FileServer(http.Dir("web/static"))).ServeHTTP(w, r)
+	})
 
 	log.Info("Starting server")
 

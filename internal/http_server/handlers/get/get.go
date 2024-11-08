@@ -32,7 +32,7 @@ func GetImage(log *slog.Logger) http.HandlerFunc {
 		format := r.URL.Query().Get("extension")
 		path := fmt.Sprintf("%s.%s", uuid, format)
 
-		img, err := os.ReadFile(filepath.Join("./upload", path))
+		octet, err := os.ReadFile(filepath.Join("./upload", path))
 		if err != nil {
 			log.Error("Error to read file", sl.Error(err))
 			render.JSON(w, r, resp.Error("Image is not found"))
@@ -40,7 +40,7 @@ func GetImage(log *slog.Logger) http.HandlerFunc {
 		}
 
 		log.Info("Got image correctly")
-		render.Data(w, r, img) //Отправка qr-code в виде application/octet-stream
+		render.Data(w, r, octet) //Отправка qr-code в виде application/octet-stream
 		//render.JSON(w, r, resp.OK())
 	}
 }
