@@ -8,6 +8,7 @@ import (
 	"img/internal/lib/logger/sl"
 	"img/internal/logger"
 	"img/internal/storage/postgres"
+	"img/internal/storage/s3"
 	"net/http"
 	"os"
 
@@ -22,6 +23,11 @@ func main() {
 	storage, err := postgres.New(cfg.StorageURL)
 	if err != nil {
 		log.Error("Failed to init Storage", sl.Error(err))
+	}
+
+	err = s3.New(log)
+	if err != nil {
+		log.Error("Failed to init S3", sl.Error(err))
 	}
 
 	r := chi.NewRouter()
