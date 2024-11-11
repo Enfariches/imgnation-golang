@@ -7,7 +7,6 @@ import (
 	mwLogger "img/internal/http_server/middleware"
 	"img/internal/lib/logger/sl"
 	"img/internal/logger"
-	"img/internal/storage/postgres"
 	"img/internal/storage/s3"
 	"net/http"
 	"os"
@@ -20,12 +19,12 @@ func main() {
 	cfg := config.NewConfig("local")
 	log := logger.SetupLogger(cfg.Env)
 
-	storage, err := postgres.New(cfg.StorageURL)
-	if err != nil {
-		log.Error("Failed to init Storage", sl.Error(err))
-	}
+	// storage, err := postgres.New(cfg.StorageURL)
+	// if err != nil {
+	// 	log.Error("Failed to init Storage", sl.Error(err))
+	// }
 
-	err = s3.New(log)
+	db, err := s3.New(log)
 	if err != nil {
 		log.Error("Failed to init S3", sl.Error(err))
 	}
@@ -36,7 +35,7 @@ func main() {
 	r.Use(middleware.Recoverer)
 	r.Use(mwLogger.New(log))
 
-	r.Post("/api/save", save.SaveImage(cfg.Server.Address, log, storage))
+	r.Post("/api/save", save.SaveImage(cfg.Server.Address, log, db))
 	r.Get("/api/img/{uuid}", get.GetImage(log))
 	// IMG -> GET UUID -> SAVE TO UPLOAD && SAVE IN BASE -> CREATE URL && CREATE QR-CODE)
 	// SWITCH UPLOAD TO S3 STORAGE (AWS SDK)

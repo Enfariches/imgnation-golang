@@ -1,14 +1,12 @@
 package save
 
 import (
-	"fmt"
 	resp "img/internal/lib/api/response"
 	"img/internal/lib/logger/sl"
 	"img/internal/lib/qr"
-	"io"
+	"img/internal/storage/s3"
 	"log/slog"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/go-chi/chi/v5/middleware"
@@ -27,7 +25,7 @@ type Saver interface {
 	SaveIMG(path string) error
 }
 
-func SaveImage(address string, log *slog.Logger, saver Saver) http.HandlerFunc {
+func SaveImage(address string, log *slog.Logger, db *s3.StorageS3) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "http_server.handlers.save"
 
@@ -53,19 +51,27 @@ func SaveImage(address string, log *slog.Logger, saver Saver) http.HandlerFunc {
 		uuid, _ := uuid.NewV7()
 		uuidStr := uuid.String()
 
-		newFilePath := fmt.Sprintf("upload/%s.%s", uuidStr, extension)
+		header.Filename = uuidStr
+		err = db.Save(log, file)
 
-		dst, err := os.Create(newFilePath)
 		if err != nil {
-			log.Error("Failed to create temp file in Dir", sl.Error(err))
+			log.Error("Failed to save file to S3", sl.Error(err))
 			return
 		}
-		defer dst.Close()
 
-		if _, err = io.Copy(dst, file); err != nil {
-			log.Error("Failed to copy file in Dir", sl.Error(err))
-			return
-		}
+		// newFilePath := fmt.Sprintf("upload/%s.%s", uuidStr, extension)
+
+		// dst, err := os.Create(newFilePath)
+		// if err != nil {
+		// 	log.Error("Failed to create temp file in Dir", sl.Error(err))
+		// 	return
+		// }
+		// defer dst.Close()
+
+		// if _, err = io.Copy(dst, file); err != nil {
+		// 	log.Error("Failed to copy file in Dir", sl.Error(err))
+		// 	return
+		// }
 
 		//err = saver.SaveIMG(uuidStr)
 		// if err != nil {

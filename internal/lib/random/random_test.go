@@ -2,7 +2,6 @@ package random
 
 import (
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 )
