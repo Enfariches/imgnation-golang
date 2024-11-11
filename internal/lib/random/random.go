@@ -5,14 +5,14 @@ import (
 	"time"
 )
 
-var charsByte = []byte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
+var charsByte = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 
-func RandStringByte(size int) string {
-	r := rand.New(rand.NewSource(time.Now().Unix()))
+func RandStringByte(size int) string { //Усложнить рандомайзер
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
-	myString := make([]byte, size)
+	myString := make([]rune, size)
 	for i := range myString {
-		myString[i] = charsByte[r.Intn(len(myString))]
+		myString[i] = charsByte[r.Intn(len(charsByte))]
 	}
 
 	return string(myString)

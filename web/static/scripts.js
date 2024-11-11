@@ -30,7 +30,7 @@ document.getElementById("myButton").addEventListener("click", function () {
 });
 
 document.getElementById("secondButton").addEventListener("click", function (){
-    fetch("http://localhost:8080/api/img/01930ad7-34ba-7cb0-b0e2-94637e965cc8?extension=jpeg").then(response => {
+    fetch("http://localhost:8080/api/img/8UjP6G5Uta").then(response => {
         if (!response.ok) {
             throw new Error("Network response was not ok " + response.statusText);
         }

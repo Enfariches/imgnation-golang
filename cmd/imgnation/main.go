@@ -36,7 +36,7 @@ func main() {
 	r.Use(mwLogger.New(log))
 
 	r.Post("/api/save", save.SaveImage(cfg.Server.Address, log, db))
-	r.Get("/api/img/{uuid}", get.GetImage(log))
+	r.Get("/api/img/{key}", get.GetImage(log, db))
 	// IMG -> GET UUID -> SAVE TO UPLOAD && SAVE IN BASE -> CREATE URL && CREATE QR-CODE)
 	// SWITCH UPLOAD TO S3 STORAGE (AWS SDK)
 

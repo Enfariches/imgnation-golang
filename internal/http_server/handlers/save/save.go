@@ -4,6 +4,7 @@ import (
 	resp "img/internal/lib/api/response"
 	"img/internal/lib/logger/sl"
 	"img/internal/lib/qr"
+	"img/internal/lib/random"
 	"img/internal/storage/s3"
 	"log/slog"
 	"net/http"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
-	"github.com/gofrs/uuid"
 )
 
 // Наследования и модификация структуры Response
@@ -25,7 +25,7 @@ type Saver interface {
 	SaveIMG(path string) error
 }
 
-func SaveImage(address string, log *slog.Logger, db *s3.StorageS3) http.HandlerFunc {
+func SaveImage(addressEnv string, log *slog.Logger, db *s3.StorageS3) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "http_server.handlers.save"
 
@@ -46,46 +46,22 @@ func SaveImage(address string, log *slog.Logger, db *s3.StorageS3) http.HandlerF
 			render.JSON(w, r, resp.Error("Invalid body")) //Response invalid body
 			return
 		}
-		extension, _ := strings.CutPrefix(infoFile, "image/")
-
-		uuid, _ := uuid.NewV7()
-		uuidStr := uuid.String()
-
-		header.Filename = uuidStr
-		err = db.Save(log, file)
+		
+		key := random.RandStringByte(10)
+		err = db.Save(log, file, key)
 
 		if err != nil {
 			log.Error("Failed to save file to S3", sl.Error(err))
 			return
 		}
 
-		// newFilePath := fmt.Sprintf("upload/%s.%s", uuidStr, extension)
-
-		// dst, err := os.Create(newFilePath)
-		// if err != nil {
-		// 	log.Error("Failed to create temp file in Dir", sl.Error(err))
-		// 	return
-		// }
-		// defer dst.Close()
-
-		// if _, err = io.Copy(dst, file); err != nil {
-		// 	log.Error("Failed to copy file in Dir", sl.Error(err))
-		// 	return
-		// }
-
-		//err = saver.SaveIMG(uuidStr)
-		// if err != nil {
-		// 	log.Error("Failed to Save to DB path", sl.Error(err))
-		// 	return
-		// }
-
 		log.Info("File upload!")
-		octet, err := qr.QRGenerate(address, log, uuidStr, extension)
+
+		octet, err := qr.QRGenerate(addressEnv, log, key)
 		if err != nil {
-			log.Error("Failed to generate QR-code", sl.Error(err))
+			log.Error("Failed to generate QR", sl.Error(err))
 			return
 		}
 		render.Data(w, r, octet)
-		//render.JSON(w, r, Response{*resp.OK(), uuidStr})
 	}
 }
