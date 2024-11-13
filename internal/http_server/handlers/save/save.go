@@ -8,7 +8,6 @@ import (
 	"img/internal/storage/s3"
 	"log/slog"
 	"net/http"
-	"strings"
 
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
@@ -33,20 +32,20 @@ func SaveImage(addressEnv string, log *slog.Logger, db *s3.StorageS3) http.Handl
 			slog.String("op", op),
 			slog.String("request_id", middleware.GetReqID(r.Context())))
 
-		file, header, err := r.FormFile("file")
+		file, _, err := r.FormFile("file")
 		if err != nil {
 			log.Error("Failed to get file from FormFile", sl.Error(err))
 			return
 		}
 		defer file.Close()
-		infoFile := header.Header.Get("Content-Type")
+		// infoFile := header.Header.Get("Content-Type")
 
-		if ok := strings.HasPrefix(infoFile, "image/"); !ok {
-			log.Error("Invalid body", sl.Error(err))
-			render.JSON(w, r, resp.Error("Invalid body")) //Response invalid body
-			return
-		}
-		
+		// if ok := strings.HasPrefix(infoFile, "image/"); !ok {
+		// 	log.Error("Invalid body", sl.Error(err))
+		// 	render.JSON(w, r, resp.Error("Invalid body")) //Response invalid body
+		// 	return
+		// }
+
 		key := random.RandStringByte(10)
 		err = db.Save(log, file, key)
 

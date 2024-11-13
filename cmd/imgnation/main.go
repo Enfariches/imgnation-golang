@@ -19,11 +19,6 @@ func main() {
 	cfg := config.NewConfig("local")
 	log := logger.SetupLogger(cfg.Env)
 
-	// storage, err := postgres.New(cfg.StorageURL)
-	// if err != nil {
-	// 	log.Error("Failed to init Storage", sl.Error(err))
-	// }
-
 	db, err := s3.New(log)
 	if err != nil {
 		log.Error("Failed to init S3", sl.Error(err))
@@ -44,8 +39,16 @@ func main() {
 		http.ServeFile(w, r, "web/static/index.html")
 	})
 
+	r.Get("/img/{key}", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "web/show/show.html")
+	})
+
 	r.Get("/web/static/*", func(w http.ResponseWriter, r *http.Request) {
 		http.StripPrefix("/web/static/", http.FileServer(http.Dir("web/static"))).ServeHTTP(w, r)
+	})
+
+	r.Get("/web/show/*", func(w http.ResponseWriter, r *http.Request) {
+		http.StripPrefix("/web/show/", http.FileServer(http.Dir("web/show"))).ServeHTTP(w, r)
 	})
 
 	log.Info("Starting server")

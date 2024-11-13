@@ -29,19 +29,5 @@ document.getElementById("myButton").addEventListener("click", function () {
     })
 });
 
-document.getElementById("secondButton").addEventListener("click", function (){
-    fetch("http://localhost:8080/api/img/8UjP6G5Uta").then(response => {
-        if (!response.ok) {
-            throw new Error("Network response was not ok " + response.statusText);
-        }
-        return response.blob();
-    }).then(data => {
-        // Обработка полученных данных (например, добавление изображения на страницу)
-        const imageUrl = URL.createObjectURL(data);
-        document.getElementById("qrImage").src = imageUrl; // Предполагается, что у вас есть элемент <img id="myImage">
-    })
-        .catch(error => {
-            console.error("There was a problem with your fetch operation:", error);
-        });
-})
+
 
