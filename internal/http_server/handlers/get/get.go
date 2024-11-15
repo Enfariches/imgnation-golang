@@ -3,6 +3,8 @@ package get
 import (
 	resp "img/internal/lib/api/response"
 	"img/internal/lib/logger/sl"
+	"img/internal/storage"
+	"img/internal/storage/redis"
 	"img/internal/storage/s3"
 	"io"
 	"log/slog"
@@ -13,7 +15,7 @@ import (
 	"github.com/go-chi/render"
 )
 
-func GetImage(log *slog.Logger, db *s3.StorageS3) http.HandlerFunc {
+func GetImage(log *slog.Logger, db *s3.StorageS3, redis *redis.StorageRedis) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "http_server.handlers.get"
 
@@ -27,18 +29,30 @@ func GetImage(log *slog.Logger, db *s3.StorageS3) http.HandlerFunc {
 			render.JSON(w, r, resp.Error("key is empty"))
 			return
 		}
-		result, err := db.Get(log, key)
-		if err != nil {
-			log.Error("Failed to get octet from S3", sl.Error(err))
-			render.JSON(w, r, resp.Error("Error to get image"))
-			return
-		}
-		octet, err := io.ReadAll(result)
-		result.Close()
 
+		octet, err := redis.CachedGet(key) //Redis Func
 		if err != nil {
-			log.Error("Error to read file", sl.Error(err))
-			return
+			if err != storage.ErrRedisNotFoundOctet {
+				log.Info("Image not found in Redis")
+			}
+
+			result, err := db.Get(key)
+			if err != nil {
+				log.Error("Failed to get octet from S3", sl.Error(err))
+				render.JSON(w, r, resp.Error("Error to get image"))
+				return
+			}
+			octet, _ = io.ReadAll(result)
+			err = redis.CachedSave(octet, key)
+			if err != nil {
+				log.Error("Failed to save in Redis", sl.Error(err))
+			}
+			result.Close()
+
+			if err != nil {
+				log.Error("Error to read file", sl.Error(err))
+				return
+			}
 		}
 
 		log.Info("Got image correctly")

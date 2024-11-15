@@ -38,13 +38,6 @@ func SaveImage(addressEnv string, log *slog.Logger, db *s3.StorageS3) http.Handl
 			return
 		}
 		defer file.Close()
-		// infoFile := header.Header.Get("Content-Type")
-
-		// if ok := strings.HasPrefix(infoFile, "image/"); !ok {
-		// 	log.Error("Invalid body", sl.Error(err))
-		// 	render.JSON(w, r, resp.Error("Invalid body")) //Response invalid body
-		// 	return
-		// }
 
 		key := random.RandStringByte(10)
 		err = db.Save(log, file, key)

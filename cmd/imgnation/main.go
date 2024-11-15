@@ -7,6 +7,7 @@ import (
 	mwLogger "img/internal/http_server/middleware"
 	"img/internal/lib/logger/sl"
 	"img/internal/logger"
+	"img/internal/storage/redis"
 	"img/internal/storage/s3"
 	"net/http"
 	"os"
@@ -19,9 +20,14 @@ func main() {
 	cfg := config.NewConfig("local")
 	log := logger.SetupLogger(cfg.Env)
 
-	db, err := s3.New(log)
+	db, err := s3.New() //AWS Config
 	if err != nil {
-		log.Error("Failed to init S3", sl.Error(err))
+		log.Error("Failed connect to S3", sl.Error(err))
+	}
+
+	redis, err := redis.New() //Redis Config
+	if err != nil {
+		log.Error("Failed connect to Redis", sl.Error(err))
 	}
 
 	r := chi.NewRouter()
@@ -31,7 +37,7 @@ func main() {
 	r.Use(mwLogger.New(log))
 
 	r.Post("/api/save", save.SaveImage(cfg.Server.Address, log, db))
-	r.Get("/api/img/{key}", get.GetImage(log, db))
+	r.Get("/api/img/{key}", get.GetImage(log, db, redis))
 	// IMG -> GET UUID -> SAVE TO UPLOAD && SAVE IN BASE -> CREATE URL && CREATE QR-CODE)
 	// SWITCH UPLOAD TO S3 STORAGE (AWS SDK)
 
