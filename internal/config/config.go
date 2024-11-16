@@ -25,8 +25,7 @@ type Storage struct {
 }
 
 type Cache struct {
-	Address  string        `yaml:"address" end-default:"localhost:"`
-	Host     string        `yaml:"host" env-default:"6379"`
+	Address  string        `yaml:"address" end-default:"localhost:6379"`
 	Password string        `yaml:"password" env-default:""`
 	DB       int           `yaml:"db" env-default:"0"`
 	TTL      time.Duration `yaml:"ttl" env-default:"10m"`

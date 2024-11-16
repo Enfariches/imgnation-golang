@@ -44,7 +44,7 @@ func New(cfg config.Cache) (*StorageRedis, error) {
 	const op = "storage.redis.New"
 
 	client := redis.NewClient(&redis.Options{
-		Addr:     cfg.Address + cfg.Host,
+		Addr:     cfg.Address,
 		Password: cfg.Password, // no password set
 		DB:       cfg.DB,       // use default DB
 	})
