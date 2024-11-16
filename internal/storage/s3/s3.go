@@ -6,6 +6,9 @@ import (
 	"io"
 	"log/slog"
 	"mime/multipart"
+	"os"
+
+	cfg "img/internal/config"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -13,7 +16,8 @@ import (
 )
 
 type StorageS3 struct {
-	s3Client *s3.Client
+	s3Client   *s3.Client
+	bucketName string
 }
 
 func (s *StorageS3) Save(log *slog.Logger, file multipart.File, key string) error {
@@ -21,7 +25,7 @@ func (s *StorageS3) Save(log *slog.Logger, file multipart.File, key string) erro
 	const op = "storage.s3.Save"
 
 	_, err := s.s3Client.PutObject(context.TODO(), &s3.PutObjectInput{
-		Bucket:      aws.String("imgnation"),
+		Bucket:      aws.String(s.bucketName),
 		Key:         aws.String(key),
 		Body:        file,
 		ContentType: aws.String("application/octet-stream"), // Укажите правильный тип контента
@@ -35,30 +39,42 @@ func (s *StorageS3) Save(log *slog.Logger, file multipart.File, key string) erro
 
 }
 
-func (s *StorageS3) Get(key string) (io.ReadCloser, error) {
+func (s *StorageS3) Get(key string) ([]byte, error) {
 	const op = "storage.s3.Get"
 
-	result, err := s.s3Client.GetObject(context.TODO(), &s3.GetObjectInput{
-		Bucket: aws.String("imgnation"),
+	object, err := s.s3Client.GetObject(context.TODO(), &s3.GetObjectInput{
+		Bucket: aws.String(s.bucketName),
 		Key:    aws.String(key),
 	})
 
 	if err != nil {
 		return nil, fmt.Errorf("%s, %w", op, err)
 	}
+	defer object.Body.Close()
 
-	return result.Body, nil
+	result, err := io.ReadAll(object.Body)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+	return result, nil
 }
 
-func New() (*StorageS3, error) {
+func New(cfg_storage cfg.Storage) (*StorageS3, error) {
 	const op = "storage.s3.New"
 
-	cfg, err := config.LoadDefaultConfig(context.TODO())
+	os.Setenv("AWS_ACCESS_KEY_ID", cfg_storage.Aws_access_key_id)
+	os.Setenv("AWS_SECRET_ACCESS_KEY", cfg_storage.Aws_secret_access_key)
+
+	cfg, err := config.LoadDefaultConfig(context.TODO(),
+		config.WithRegion(cfg_storage.Region))
+
 	if err != nil {
 		return nil, fmt.Errorf("%s, %w", op, err)
 	}
 
-	client := s3.NewFromConfig(cfg)
+	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.BaseEndpoint = aws.String(cfg_storage.Endpoint_url)
+	})
 
-	return &StorageS3{s3Client: client}, nil
+	return &StorageS3{s3Client: client, bucketName: cfg_storage.BucketName}, nil
 }

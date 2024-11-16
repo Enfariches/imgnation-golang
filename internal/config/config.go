@@ -4,14 +4,32 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
 type Config struct {
-	Env        string `yaml:"env" env-default:"local"`
-	StorageURL string `yaml:"storage_url"`
+	Env string `yaml:"env" env-default:"local"`
+	Storage
+	Cache
 	Server
+}
+
+type Storage struct {
+	Region                string `yaml:"region" env-default:"ru-central1" env-require:"true"`
+	Endpoint_url          string `yaml:"endpoint_url" env-default:"https://storage.yandexcloud.net/" env-require:"true"`
+	Aws_access_key_id     string `yaml:"aws_access_key_id" env-require:"true"`
+	Aws_secret_access_key string `yaml:"aws_secret_access_key" env-require:"true"`
+	BucketName            string `yaml:"bucketname" env-require:"true"`
+}
+
+type Cache struct {
+	Address  string        `yaml:"address" end-default:"localhost:"`
+	Host     string        `yaml:"host" env-default:"6379"`
+	Password string        `yaml:"password" env-default:""`
+	DB       int           `yaml:"db" env-default:"0"`
+	TTL      time.Duration `yaml:"ttl" env-default:"10m"`
 }
 
 type Server struct {
@@ -20,6 +38,7 @@ type Server struct {
 
 func NewConfig(nameConfig string) *Config {
 	pathConfig := fmt.Sprintf("./config/%s.yaml", nameConfig)
+
 	err := os.Setenv("CONFIG", pathConfig)
 	if err != nil {
 		log.Fatal("Failed to set env", err)

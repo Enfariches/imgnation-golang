@@ -20,12 +20,12 @@ func main() {
 	cfg := config.NewConfig("local")
 	log := logger.SetupLogger(cfg.Env)
 
-	db, err := s3.New() //AWS Config
+	db, err := s3.New(cfg.Storage) //AWS Config
 	if err != nil {
 		log.Error("Failed connect to S3", sl.Error(err))
 	}
 
-	redis, err := redis.New() //Redis Config
+	redis, err := redis.New(cfg.Cache) //Redis Config
 	if err != nil {
 		log.Error("Failed connect to Redis", sl.Error(err))
 	}
@@ -60,7 +60,7 @@ func main() {
 	log.Info("Starting server")
 
 	server := http.Server{
-		Addr:    cfg.Address,
+		Addr:    cfg.Server.Address,
 		Handler: r,
 	}
 	if err := server.ListenAndServe(); err != nil {
