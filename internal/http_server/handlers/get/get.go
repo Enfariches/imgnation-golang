@@ -1,11 +1,13 @@
 package get
 
 import (
+	"context"
 	resp "img/internal/lib/api/response"
 	"img/internal/lib/logger/sl"
 	"img/internal/storage"
 	"img/internal/storage/redis"
-	"img/internal/storage/s3"
+	s3db"img/internal/storage/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"log/slog"
 	"net/http"
 
@@ -14,7 +16,12 @@ import (
 	"github.com/go-chi/render"
 )
 
-func GetImage(log *slog.Logger, db *s3.StorageS3, redis *redis.StorageRedis) http.HandlerFunc {
+//go:generate mockery --name=S3GetterImage
+type S3GetterImage interface {
+	GetObject(ctx context.Context, params *s3.GetObjectInput, optFns ...func(*s3.Options)) (*s3.GetObjectOutput, error)
+}
+
+func GetImage(log *slog.Logger, db *s3db.StorageS3, redis *redis.StorageRedis) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "http_server.handlers.get"
 

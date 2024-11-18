@@ -1,11 +1,13 @@
 package save
 
 import (
+	"context"
 	resp "img/internal/lib/api/response"
 	"img/internal/lib/logger/sl"
 	"img/internal/lib/qr"
 	"img/internal/lib/random"
-	"img/internal/storage/s3"
+	s3db "img/internal/storage/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"log/slog"
 	"net/http"
 
@@ -19,12 +21,12 @@ type Response struct {
 	Uuid string `json:"uuid,omitempty"` //Теги (метаданные) определяют представления в JSON
 }
 
-//go:generate mockery --name=Saver
-type Saver interface {
-	SaveIMG(path string) error
+//go:generate mockery --name=S3SaverImage
+type S3SaverImage interface {
+	PutObject(ctx context.Context, params *s3.PutObjectInput, optFns ...func(*s3.Options)) (*s3.PutObjectOutput, error)
 }
 
-func SaveImage(addressEnv string, log *slog.Logger, db *s3.StorageS3) http.HandlerFunc {
+func SaveImage(addressEnv string, log *slog.Logger, db *s3db.StorageS3) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "http_server.handlers.save"
 
