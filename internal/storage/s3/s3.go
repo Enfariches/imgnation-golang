@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log/slog"
 	"mime/multipart"
 	"os"
 
@@ -20,7 +19,7 @@ type StorageS3 struct {
 	bucketName string
 }
 
-func (s *StorageS3) Save(log *slog.Logger, file multipart.File, key string) error {
+func (s *StorageS3) Save(file multipart.File, key string) error {
 	// Загружаем объект в S3
 	const op = "storage.s3.Save"
 

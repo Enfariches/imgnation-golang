@@ -3,9 +3,8 @@
 package mocks
 
 import (
-	context "context"
+	multipart "mime/multipart"
 
-	s3 "github.com/aws/aws-sdk-go-v2/service/s3"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -14,41 +13,22 @@ type S3SaverImage struct {
 	mock.Mock
 }
 
-// PutObject provides a mock function with given fields: ctx, params, optFns
-func (_m *S3SaverImage) PutObject(ctx context.Context, params *s3.PutObjectInput, optFns ...func(*s3.Options)) (*s3.PutObjectOutput, error) {
-	_va := make([]interface{}, len(optFns))
-	for _i := range optFns {
-		_va[_i] = optFns[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, params)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
+// Save provides a mock function with given fields: file, key
+func (_m *S3SaverImage) Save(file multipart.File, key string) error {
+	ret := _m.Called(file, key)
 
 	if len(ret) == 0 {
-		panic("no return value specified for PutObject")
+		panic("no return value specified for Save")
 	}
 
-	var r0 *s3.PutObjectOutput
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *s3.PutObjectInput, ...func(*s3.Options)) (*s3.PutObjectOutput, error)); ok {
-		return rf(ctx, params, optFns...)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *s3.PutObjectInput, ...func(*s3.Options)) *s3.PutObjectOutput); ok {
-		r0 = rf(ctx, params, optFns...)
+	var r0 error
+	if rf, ok := ret.Get(0).(func(multipart.File, string) error); ok {
+		r0 = rf(file, key)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*s3.PutObjectOutput)
-		}
+		r0 = ret.Error(0)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *s3.PutObjectInput, ...func(*s3.Options)) error); ok {
-		r1 = rf(ctx, params, optFns...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // NewS3SaverImage creates a new instance of S3SaverImage. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

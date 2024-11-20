@@ -1,3 +1,4 @@
 /config
 /upload
+internal/http_server/handlers/testing_files
 .DS_Store

@@ -1,14 +1,12 @@
 package save
 
 import (
-	"context"
 	resp "img/internal/lib/api/response"
 	"img/internal/lib/logger/sl"
 	"img/internal/lib/qr"
 	"img/internal/lib/random"
-	s3db "img/internal/storage/s3"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"log/slog"
+	"mime/multipart"
 	"net/http"
 
 	"github.com/go-chi/chi/v5/middleware"
@@ -23,10 +21,10 @@ type Response struct {
 
 //go:generate mockery --name=S3SaverImage
 type S3SaverImage interface {
-	PutObject(ctx context.Context, params *s3.PutObjectInput, optFns ...func(*s3.Options)) (*s3.PutObjectOutput, error)
+	Save(file multipart.File, key string) error
 }
 
-func SaveImage(addressEnv string, log *slog.Logger, db *s3db.StorageS3) http.HandlerFunc {
+func SaveImage(addressEnv string, log *slog.Logger, db S3SaverImage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "http_server.handlers.save"
 
@@ -42,7 +40,7 @@ func SaveImage(addressEnv string, log *slog.Logger, db *s3db.StorageS3) http.Han
 		defer file.Close()
 
 		key := random.RandStringByte(10)
-		err = db.Save(log, file, key)
+		err = db.Save(file, key)
 
 		if err != nil {
 			log.Error("Failed to save file to S3", sl.Error(err))
